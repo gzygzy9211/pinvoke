@@ -228,7 +228,7 @@ namespace PInvoke.Controls
             }
             catch (Exception ex)
             {
-                _managedCodeTextBox.Code = ex.Message;
+				_managedCodeTextBox.Code = ex.ToString();
             }
         }
 

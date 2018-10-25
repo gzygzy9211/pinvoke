@@ -208,10 +208,13 @@ namespace PInvoke.Parser
             set { _errorProvider = value; }
         }
 
+        public string SystemIncludePath { get; private set; }
+
         public PreProcessorEngine(PreProcessorOptions options)
         {
             _eval = new ExpressionEvaluator(_macroMap);
             _options = options;
+            SystemIncludePath = "include/";
         }
 
         /// <summary>

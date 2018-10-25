@@ -614,6 +614,12 @@ namespace PInvoke.Transform
             if (nt.Kind == NativeSymbolKind.PointerType)
             {
                 NativeType realType = ((NativePointer)nt).RealTypeDigged;
+                // The underlying type of the pointer is not resovled, then it should also
+                // be a handle type whose underlying type is not exposed outside the Lib 
+                if (realType == null)
+                {
+                    return true;
+                }
                 if (realType.Name.StartsWith("H") && realType.Name.EndsWith("__"))
                 {
                     return true;
@@ -1235,6 +1241,12 @@ namespace PInvoke.Transform
                 return false;
             }
 
+            // Don't process pointer with underlying type unresolved
+            if (ptr.RealTypeDigged == null)
+            {
+                return false;
+            }
+
             NativeBuiltinType bt = null;
             if (IsPointerToBuiltin(ptr, ref bt))
             {
@@ -1722,6 +1734,11 @@ namespace PInvoke.Transform
             }
 
             NativeType target = ((NativePointer)type).RealType.DigThroughTypeDefAndNamedTypes();
+            // Underlying type of the handle is unresolved, then it should not be double pointer
+            if (target == null)
+            {
+                return;
+            }
             if (target.Kind != NativeSymbolKind.PointerType)
             {
                 return;
@@ -1771,6 +1788,11 @@ namespace PInvoke.Transform
             }
 
             NativeType target = ((NativePointer)type).RealType.DigThroughTypeDefAndNamedTypes();
+            // Underlying type of the handle is unresolved, then it should not be double pointer
+            if (target == null)
+            {
+                return;
+            }
             if (target.Kind != NativeSymbolKind.PointerType)
             {
                 return;

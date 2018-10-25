@@ -15,6 +15,7 @@ using PInvoke.Transform;
 using static PInvoke.Contract;
 using System.CodeDom.Compiler;
 using System.Text;
+using System.Linq;
 
 namespace PInvoke.Transform
 {
@@ -174,6 +175,11 @@ namespace PInvoke.Transform
 
                 ep.Append(result.ErrorProvider);
                 bag = NativeSymbolBag.CreateFrom(result, Storage);
+            }
+            { // debug
+                System.Windows.Forms.MessageBox.Show(
+                    bag.NativeProcedures.Select(p => p.Name).Aggregate((a, b) => (a + " || " + b))
+                );
             }
 
             return ConvertBagToCodeDom(bag, ep);

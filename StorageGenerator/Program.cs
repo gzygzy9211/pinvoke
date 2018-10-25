@@ -152,7 +152,7 @@ internal static class Program
 
     public static void Main()
     {
-        using (StreamWriter sw = new StreamWriter("d:\\temp\\windows.vb"))
+        using (StreamWriter sw = new StreamWriter("windows.new"))
         {
             Generate(sw);
         }

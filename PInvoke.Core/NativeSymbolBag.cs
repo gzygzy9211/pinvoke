@@ -537,6 +537,13 @@ namespace PInvoke
                 }
             }
 
+            // Special case for pointer since pointer does not need to be actually resolved
+            if (ns.Kind == NativeSymbolKind.PointerType)
+            {
+                map.Add(ns, true);
+                return true;
+            }
+
             // If there are no immediate children then the type is most definately resolved
             NativeSymbolIterator it = new NativeSymbolIterator();
             List<NativeSymbol> children = new List<NativeSymbol>(ns.GetChildren());

@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using PInvoke.Parser;
 using static PInvoke.Contract;
+using System.Linq;
 
 namespace PInvoke.Transform
 {
@@ -262,6 +263,11 @@ namespace PInvoke.Transform
             foreach (NativeProcedure proc in enumerable)
             {
                 ctd.Members.Add(GenerateProcedure(proc));
+            }
+            { // debug
+                System.Windows.Forms.MessageBox.Show(
+                    enumerable.Select(p => p.Name).Aggregate((a, b) => a + " || " + b)
+                );
             }
 
             return ctd;

@@ -1499,26 +1499,33 @@ namespace PInvoke.Parser
 
             // Down to simple types.  Look for any type prefixes
             NativeBuiltinType bt = null;
-            Token token = _scanner.GetNextToken();
+            // Token token = _scanner.GetNextToken();
+            // 
+            // if (token.TokenType == TokenType.LongKeyword || token.TokenType == TokenType.SignedKeyword || token.TokenType == TokenType.UnsignedKeyword)
+            // {
+            //     // If the next token is a builtin type keyword then these are modifiers of that
+            //     // keyword
+            //     if (_scanner.PeekNextToken().IsTypeKeyword)
+            //     {
+            //         NativeBuiltinType.TryConvertToBuiltinType(_scanner.GetNextToken().TokenType, out bt);
+            //         bt.IsUnsigned = (token.TokenType == TokenType.UnsignedKeyword);
+            //     }
+            //     else
+            //     {
+            //         NativeBuiltinType.TryConvertToBuiltinType(token.TokenType, out bt);
+            //     }
+            // }
+            // else if (token.IsTypeKeyword)
+            // {
+            //     NativeBuiltinType.TryConvertToBuiltinType(token.TokenType, out bt);
+            // }
 
-            if (token.TokenType == TokenType.LongKeyword || token.TokenType == TokenType.SignedKeyword || token.TokenType == TokenType.UnsignedKeyword)
-            {
-                // If the next token is a builtin type keyword then these are modifiers of that
-                // keyword
-                if (_scanner.PeekNextToken().IsTypeKeyword)
-                {
-                    NativeBuiltinType.TryConvertToBuiltinType(_scanner.GetNextToken().TokenType, out bt);
-                    bt.IsUnsigned = (token.TokenType == TokenType.UnsignedKeyword);
-                }
-                else
-                {
-                    NativeBuiltinType.TryConvertToBuiltinType(token.TokenType, out bt);
-                }
-            }
-            else if (token.IsTypeKeyword)
-            {
-                NativeBuiltinType.TryConvertToBuiltinType(token.TokenType, out bt);
-            }
+            // wing rewrite this whole section for native builtin tyte detection
+            var type_tokens = new List<Token>();
+            while (_scanner.PeekNextToken().IsTypeKeyword)
+                type_tokens.Add(_scanner.GetNextToken());
+
+            NativeBuiltinType.TryConvertToBuiltinType(type_tokens, out bt);
 
             // If this is a builtin type and it's not constant then just return the builtin type.  Otherwise we 
             // have to return the named type since it holds the qualifier
@@ -1537,6 +1544,7 @@ namespace PInvoke.Parser
             }
             else
             {
+                Token token = _scanner.GetNextToken();
                 // It's not a builtin type.  Return the name
                 return new NativeNamedType(token.Value, isConst);
             }

@@ -178,7 +178,7 @@ namespace PInvoke.Transform
             }
             { // debug
                 System.Windows.Forms.MessageBox.Show(
-                    bag.NativeProcedures.Select(p => p.Name).Aggregate((a, b) => (a + " || " + b))
+                    bag.NativeProcedures.Select(p => p.Name).Aggregate("", (a, b) => (a + " || " + b))
                 );
             }
 

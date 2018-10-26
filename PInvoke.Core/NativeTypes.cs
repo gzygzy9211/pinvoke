@@ -8,6 +8,7 @@ using System.CodeDom;
 using System.Text;
 using static PInvoke.Contract;
 using PInvoke.Parser;
+using System.Linq;
 
 namespace PInvoke
 {
@@ -1241,6 +1242,150 @@ namespace PInvoke
                     break;
             }
 
+        }
+
+        public static bool TryConvertToBuiltinType(List<Token> type_tokens, out NativeBuiltinType nativeBt)
+        {
+            nativeBt = null;
+
+            if (type_tokens.Count == 0
+              || !type_tokens.Select(t => t.IsTypeKeyword).Aggregate((a, b) => a && b))
+            {
+                return false;
+            }
+
+            var ret = false; 
+            if (type_tokens.Count == 1)
+                return TryConvertToBuiltinType(type_tokens.Last().TokenType, out nativeBt);
+            else
+                // not single word type
+                switch (type_tokens.Last().TokenType)
+                {
+                    case TokenType.FloatKeyword:
+                    case TokenType.DoubleKeyword:
+                    case TokenType.BooleanKeyword:
+                    case TokenType.ByteKeyword:
+                    case TokenType.VoidKeyword:
+                    case TokenType.SignedKeyword:
+                    case TokenType.UnsignedKeyword:
+                        throw new InvalidOperationException(string.Format(
+                            "Unknown type \"{0}\"",
+                            type_tokens.Select(t => t.Value).Aggregate((a, b) => a + " " + b)
+                        ));
+
+                    case TokenType.Int16Keyword:
+                    case TokenType.Int64Keyword:
+                    case TokenType.ShortKeyword:
+                    case TokenType.CharKeyword:
+                    case TokenType.WCharKeyword:
+                        // can only decorated by 'signed' or 'unsigned', NOT both
+                        // hence type_tokens.Count == 2
+                        if (type_tokens.Count > 2)
+                            throw new InvalidOperationException(string.Format(
+                                "Unknown type \"{0}\"",
+                                type_tokens.Select(t => t.Value).Aggregate((a, b) => a + " " + b)
+                            ));
+                        ret = TryConvertToBuiltinType(type_tokens.Last().TokenType, out nativeBt);
+                        if (!ret)
+                            return ret;
+                        switch (type_tokens.First().TokenType)
+                        {
+                            case TokenType.UnsignedKeyword:
+                                nativeBt.IsUnsigned = true;
+                                break;
+                            case TokenType.SignedKeyword:
+                                break;
+                            default:
+                                throw new InvalidOperationException(string.Format(
+                                    "Unknown type \"{0}\"",
+                                    type_tokens.Select(t => t.Value).Aggregate((a, b) => a + " " + b)
+                                ));
+                        }
+                        return ret;
+
+                    case TokenType.LongKeyword:
+                        ret = TryConvertToBuiltinType(type_tokens.Last().TokenType, out nativeBt);
+                        if (!ret)
+                            return ret;
+                        if (type_tokens.Count == 2)
+                        {
+                            switch(type_tokens.First().TokenType)
+                            {
+                                case TokenType.UnsignedKeyword:
+                                    nativeBt.IsUnsigned = true;
+                                    break;
+                                case TokenType.LongKeyword:
+                                    nativeBt = new NativeBuiltinType(BuiltinType.NativeInt64, false);
+                                    break;
+                                case TokenType.SignedKeyword:
+                                    break;
+                                default:
+                                    throw new InvalidOperationException(string.Format(
+                                        "Unknown type \"{0}\"",
+                                        type_tokens.Select(t => t.Value).Aggregate((a, b) => a + " " + b)
+                                    ));
+                            }
+                        }
+                        else if (type_tokens.Count == 3)
+                        {
+                            if (type_tokens[1].TokenType != TokenType.LongKeyword)
+                                throw new InvalidOperationException(string.Format(
+                                        "Unknown type \"{0}\"",
+                                        type_tokens.Select(t => t.Value).Aggregate((a, b) => a + " " + b)
+                                    ));
+                            bool is_unsigned;
+                            switch(type_tokens.First().TokenType)
+                            {
+                                case TokenType.UnsignedKeyword:
+                                    is_unsigned = true;
+                                    break;
+                                case TokenType.SignedKeyword:
+                                    is_unsigned = false;
+                                    break;
+                                default:
+                                    throw new InvalidOperationException(string.Format(
+                                        "Unknown type \"{0}\"",
+                                        type_tokens.Select(t => t.Value).Aggregate((a, b) => a + " " + b)
+                                    ));
+                            }
+                            nativeBt = new NativeBuiltinType(BuiltinType.NativeInt64, is_unsigned);
+                        }
+                        else 
+                            throw new InvalidOperationException(string.Format(
+                                "Unknown type \"{0}\"",
+                                type_tokens.Select(t => t.Value).Aggregate((a, b) => a + " " + b)
+                            ));
+                        return ret;
+
+                    case TokenType.IntKeyword:
+                        Func<TokenType, bool> is_int_modifier = t =>
+                        {
+                            switch (t)
+                            {
+                                case TokenType.UnsignedKeyword:
+                                case TokenType.SignedKeyword:
+                                case TokenType.ShortKeyword:
+                                case TokenType.LongKeyword:
+                                    return true;
+                                default:
+                                    return false;
+                            }
+                        };
+                        if (type_tokens
+                            .Take(type_tokens.Count - 1)
+                            .Select(t => is_int_modifier(t.TokenType))
+                            .Aggregate((a, b) => a && b))
+                            return TryConvertToBuiltinType(type_tokens.Take(type_tokens.Count - 1).ToList(), out nativeBt);
+                        else
+                            throw new InvalidOperationException(string.Format(
+                                "Unknown type \"{0}\"",
+                                type_tokens.Select(t => t.Value).Aggregate((a, b) => a + " " + b)
+                            ));
+                        
+                    default:
+                        nativeBt = null;
+                        return false;
+                }
         }
 
         public static bool TryConvertToBuiltinType(string name, out NativeBuiltinType nativeBt)

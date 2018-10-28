@@ -12,6 +12,7 @@ using PInvoke;
 using PInvoke.Controls;
 using PInvoke.Storage;
 using System.IO;
+using System.Linq;
 
 namespace PInvoke.Controls
 {
@@ -951,6 +952,10 @@ namespace PInvoke.Controls
                 using (var stream = File.Open("windows.csv", FileMode.Open))
                 {
                     _nativeStorage = StorageUtil.ReadCsv(stream);
+					var s = _nativeStorage as BasicSymbolStorage;
+					// default we are in 64bit system
+					s.NativeTypeDefs.Where(t => t.Name == "size_t")
+						.First().RealType = new NativeBuiltinType(BuiltinType.NativeInt64, true);
                 }
             }
             catch (Exception ex)

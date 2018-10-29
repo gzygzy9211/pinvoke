@@ -1137,12 +1137,12 @@ namespace PInvoke.Transform
                 return;
             }
 
-            SalAnalyzer analyzer = new SalAnalyzer(ntParam.SalAttribute);
-            string size = null;
-            if (!analyzer.IsInElementBuffer(out size))
-            {
-                return;
-            }
+            // SalAnalyzer analyzer = new SalAnalyzer(ntParam.SalAttribute);
+            // string size = null;
+            // if (!analyzer.IsInElementBuffer(out size))
+            // {
+            //     return;
+            // }
 
             // Make sure this is not a void* element buffer.  We can't generated void[] into managed code
             // so ignore it here and let it process as a normal array
@@ -1151,17 +1151,17 @@ namespace PInvoke.Transform
                 return;
             }
 
-            CodeAttributeArgument sizeArg = null;
-            if (!TryGenerateSizeArgument(col, size, ref sizeArg))
-            {
-                return;
-            }
+            // CodeAttributeArgument sizeArg = null;
+            // if (!TryGenerateSizeArgument(col, size, ref sizeArg))
+            // {
+            //     return;
+            // }
 
             // Finally, generate the attribute
             codeParam.Direction = FieldDirection.In;
             codeParam.Type = new CodeTypeReference(ct, 1);
             codeParam.CustomAttributes.Clear();
-            codeParam.CustomAttributes.Add(MarshalAttributeFactory.CreateArrayParamTypeAttribute(ut, sizeArg));
+            // codeParam.CustomAttributes.Add(MarshalAttributeFactory.CreateArrayParamTypeAttribute(ut, sizeArg));
             SetParamProcessed(codeParam);
         }
 
@@ -1261,12 +1261,13 @@ namespace PInvoke.Transform
                 return true;
 
             }
-            else if (ptr.RealTypeDigged.Kind == NativeSymbolKind.StructType || ptr.RealTypeDigged.Kind == NativeSymbolKind.UnionType)
-            {
-                elemType = _trans.GenerateTypeReference(ptr.RealTypeDigged);
-                unmanagedType = System.Runtime.InteropServices.UnmanagedType.Struct;
-                return true;
-            }
+            // wing: Do not convert Ptr to Struct or Union into Array
+            // else if (ptr.RealTypeDigged.Kind == NativeSymbolKind.StructType || ptr.RealTypeDigged.Kind == NativeSymbolKind.UnionType)
+            // {
+            //     elemType = _trans.GenerateTypeReference(ptr.RealTypeDigged);
+            //     unmanagedType = System.Runtime.InteropServices.UnmanagedType.Struct;
+            //     return true;
+            // }
 
             return false;
         }

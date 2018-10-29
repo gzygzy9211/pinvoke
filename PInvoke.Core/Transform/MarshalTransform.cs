@@ -50,7 +50,7 @@ namespace PInvoke.Transform
             _list.Add(new ConstantStringTransformPlugin());
             _list.Add(new ArrayParameterTransformPlugin(_trans));
             _list.Add(new BetterManagedTypesTransformPlugin());
-            _list.Add(new PointerToKnownTypeTransformPlugin(_trans));
+            // _list.Add(new PointerToKnownTypeTransformPlugin(_trans));
             _list.Add(new SystemIntTransformPlugin());
             _list.Add(new RawStringTransformPlugin());
 

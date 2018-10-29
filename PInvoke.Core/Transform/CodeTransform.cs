@@ -774,31 +774,67 @@ namespace PInvoke.Transform
             // Check the various proxy types
             if (proxyNt.RealType == null)
             {
-                string msg = string.Format("Could not find the real type for {0}", proxyNt.DisplayName);
-                throw new InvalidOperationException(msg);
+				// for unresolved types, just add comment if it is const
+				if (proxyNt.Kind == NativeSymbolKind.NamedType && (proxyNt as NativeNamedType).IsConst)
+					comment += "const ";
+				comment += proxyNt.DisplayName;
+				return null;
             }
 
             switch (proxyNt.Kind)
             {
                 case NativeSymbolKind.ArrayType:
-                    comment += proxyNt.DisplayName;
+                    //comment += proxyNt.DisplayName;
+					// wing: recursive generate comment like NativeNamedType
                     NativeArray arrayNt = (NativeArray)proxyNt;
-                    CodeTypeReference elemRef = GenerateTypeReference(arrayNt.RealType);
+					if (arrayNt.RealType != null)
+					{
+						GenerateTypeReferenceImpl(arrayNt.RealType, ref comment);
+						comment += "[]";
+					}
+					else 
+						// fallback for unresolved types
+						comment += proxyNt.DisplayName;
+					// wing: recursive generate comment like NativeNamedType
+					CodeTypeReference elemRef = GenerateTypeReference(arrayNt.RealType);
                     CodeTypeReference arrayRef = new CodeTypeReference(elemRef, 1);
                     return arrayRef;
                 case NativeSymbolKind.PointerType:
-                    comment += proxyNt.DisplayName;
+                    //comment += proxyNt.DisplayName;
                     NativePointer pointerNt = (NativePointer)proxyNt;
+					// wing: recursive generate comment like NativeNamedType
+					if (pointerNt.RealType != null)
+					{
+						GenerateTypeReferenceImpl(pointerNt.RealType, ref comment);
+						comment += " *";
+					}
+					else 
+						// fallback for unresolved types
+						comment += proxyNt.DisplayName;
                     return new CodeTypeReference(typeof(IntPtr));
                 case NativeSymbolKind.TypeDefType:
                     NativeTypeDef td = (NativeTypeDef)proxyNt;
-                    comment += td.Name + "->";
-                    return GenerateTypeReferenceImpl(td.RealType, ref comment);
+                    comment += "(" + td.Name + "=";
+                    var retDef = GenerateTypeReferenceImpl(td.RealType, ref comment);
+					comment += ")";
+					return retDef;
                 case NativeSymbolKind.NamedType:
                     // Don't update the comment for named types.  Otherwise you get lots of 
                     // comments like DWORD->DWORD->unsigned long
                     NativeNamedType namedNt = (NativeNamedType)proxyNt;
-                    return GenerateTypeReferenceImpl(namedNt.RealType, ref comment);
+					// wing: add 'const' mark so the comment can describe the original more accurately
+					if (namedNt.RealType.Kind == NativeSymbolKind.PointerType) // for const pointer
+					{
+						var retNamed = GenerateTypeReferenceImpl(namedNt.RealType, ref comment);
+						comment += "const ";
+						return retNamed;
+					}
+					else
+					{
+						if (namedNt.IsConst) comment += "const ";
+						var retNamed2 = GenerateTypeReferenceImpl(namedNt.RealType, ref comment);
+						return retNamed2;
+					}
                 default:
                     Contract.ThrowInvalidEnumValue(proxyNt.Kind);
                     return null;

@@ -826,7 +826,24 @@ namespace PInvoke.Transform
             get { return TransformKindFlags.Signature; }
         }
 
-        protected override void ProcessSingleParameter(System.CodeDom.CodeParameterDeclarationExpression codeParam, NativeParameter ntParam, bool isDelegateParam)
+		protected override void ProcessReturnTypeImpl(CodeMemberMethod codeMethod, NativeType ntType, NativeSalAttribute ntSal)
+		{
+			CharSet charSet = CharSet.None;
+			if (!IsPointerToCharType(ntType, ref charSet))
+			{
+				return;
+			}
+
+			var pt = ntType.DigThroughTypeDefAndNamedTypes() as NativePointer;
+			if (pt.RealType is NativeNamedType && (pt.RealType as NativeNamedType).IsConst)
+			{
+				codeMethod.ReturnType = new CodeTypeReference(typeof(string));
+				codeMethod.ReturnTypeCustomAttributes.Add(MarshalAttributeFactory.CreateOutAttribute());
+				codeMethod.ReturnTypeCustomAttributes.Add(CreateStringMarshalAttribute(charSet));
+			}
+		}
+
+		protected override void ProcessSingleParameter(System.CodeDom.CodeParameterDeclarationExpression codeParam, NativeParameter ntParam, bool isDelegateParam)
         {
             NativeType paramType = ntParam.NativeTypeDigged;
 

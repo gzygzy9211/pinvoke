@@ -1574,6 +1574,8 @@ namespace PInvoke.Parser
                         if (_scanner.PeekNextToken().TokenType == TokenType.ConstKeyword)
                         {
                             _scanner.GetNextToken();
+							nt = new NativeNamedType(nt.DisplayName, nt);
+							(nt as NativeNamedType).IsConst = true;
                         }
                         break;
                     case TokenType.BracketOpen:
@@ -1585,15 +1587,16 @@ namespace PInvoke.Parser
                         // Done once we hit the next word
                         done = true;
                         break;
-                    case TokenType.ConstKeyword:
-                        // If the const modifier proceeds a pointer then allow the pointer to 
-                        // be processed.  Otherwise we are done
-                        _scanner.GetNextToken();
-                        if (_scanner.PeekNextToken().TokenType != TokenType.Asterisk)
-                        {
-                            done = true;
-                        }
-                        break;
+					// error consume the const!!
+                    // case TokenType.ConstKeyword:
+                    //     // If the const modifier proceeds a pointer then allow the pointer to 
+                    //     // be processed.  Otherwise we are done
+                    //     _scanner.GetNextToken();
+                    //     if (_scanner.PeekNextToken().TokenType != TokenType.Asterisk)
+                    //     {
+                    //         done = true;
+                    //     }
+                    //     break;
                     case TokenType.VolatileKeyword:
                         // Igore the volatile qualifier
                         _scanner.GetNextToken();

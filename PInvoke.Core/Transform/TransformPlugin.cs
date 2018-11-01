@@ -838,7 +838,7 @@ namespace PInvoke.Transform
 			if (pt.RealType is NativeNamedType && (pt.RealType as NativeNamedType).IsConst)
 			{
 				codeMethod.ReturnType = new CodeTypeReference(typeof(string));
-				codeMethod.ReturnTypeCustomAttributes.Add(CreateStringMarshalAttribute(charSet));
+				codeMethod.ReturnTypeCustomAttributes.Add(CreateReturnStringMarshalAttribute());
 			}
 		}
 
@@ -932,15 +932,16 @@ namespace PInvoke.Transform
 
             // Whenever we have a delegate with a SysInt param we should marshal it as an IntPtr.  Trying to Marshal an Integer as 
             // SysInt causes a lot of exceptions no matter what the combination is.  
-            if (isDelegateParam)
-            {
-                if (this.IsSystemIntType(ntParam))
-                {
-                    codeParam.Type = new CodeTypeReference(typeof(IntPtr));
-                    codeParam.CustomAttributes.Clear();
-                }
-                return;
-            }
+            // if (isDelegateParam)
+            // {
+            //     if (this.IsSystemIntType(ntParam))
+            //     {
+            //         codeParam.Type = new CodeTypeReference(typeof(IntPtr));
+            //         codeParam.CustomAttributes.Clear();
+            //     }
+            //     return;
+            // }
+			// wing: I doubt about that
 
             // If it's already an IntPtr we don't need to add any information
             if (CodeDomUtil.IsIntPtrType(codeParam.Type))
@@ -2701,19 +2702,52 @@ namespace PInvoke.Transform
         }
     }
 
-    #endregion
+	#endregion
 
-    #endregion
+	#region "FunctionPointerMemberTransformPlugin"
 
-    #region "Union Members"
+	/// <summary>
+	/// Convert Function Pointer Members into IntPtr for PInvoke Compatibility
+	/// </summary>
+	/// <remarks></remarks>
+	internal class FunctionPointerMemberTransformPlugin : TransformPlugin
+	{
 
-    #region "BoolUnionMemberTransformPlugin"
+		public override TransformKindFlags TransformKind
+		{
+			get { return TransformKindFlags.StructMembers; }
+		}
 
-    /// <summary>
-    /// Look for boolean types that are members of a union
-    /// </summary>
-    /// <remarks></remarks>
-    internal class BoolUnionMemberTransformPlugin : TransformPlugin
+
+		protected override void ProcessSingleStructField(System.CodeDom.CodeTypeDeclaration ctd, System.CodeDom.CodeMemberField field, NativeMember ntMem)
+		{
+			NativeType retNt = ntMem.NativeType;
+			if (retNt != null && retNt.Kind == NativeSymbolKind.FunctionPointer)
+			{
+				if (field.Name.StartsWith("AnonymousMember"))
+					field.Name = field.Type.BaseType;
+				else
+					field.Name = field.Type.BaseType + "_" + field.Name;
+				field.Type = new CodeTypeReference(typeof(IntPtr));
+				field.CustomAttributes.Clear();
+				SetMemberProcessed(field);
+			}
+		}
+	}
+
+	#endregion
+
+	#endregion
+
+	#region "Union Members"
+
+	#region "BoolUnionMemberTransformPlugin"
+
+	/// <summary>
+	/// Look for boolean types that are members of a union
+	/// </summary>
+	/// <remarks></remarks>
+	internal class BoolUnionMemberTransformPlugin : TransformPlugin
     {
 
 

@@ -128,7 +128,15 @@ namespace PInvoke.Transform
             return decl;
         }
 
-        static internal CodeAttributeDeclaration CreateDebuggerStepThroughAttribute()
+		static internal CodeAttributeDeclaration CreateReturnStringMarshalAttribute()
+		{
+			CodeAttributeDeclaration decl = new CodeAttributeDeclaration(new CodeTypeReference(typeof(MarshalAsAttribute)));
+			decl.Arguments.Add(new CodeAttributeArgument(new CodeFieldReferenceExpression(new CodeTypeReferenceExpression(typeof(UnmanagedType)), "CustomMarshaler")));
+			decl.Arguments.Add(new CodeAttributeArgument("MarshalTypeRef", new CodeTypeOfExpression("LPStrReturnMarshaler")));
+			return decl;
+		}
+
+		static internal CodeAttributeDeclaration CreateDebuggerStepThroughAttribute()
         {
             return new CodeAttributeDeclaration(new CodeTypeReference(typeof(DebuggerStepThroughAttribute)));
         }

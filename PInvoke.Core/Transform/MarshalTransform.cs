@@ -63,6 +63,7 @@ namespace PInvoke.Transform
             _list.Add(new StringBufferStructMemberTransformPlugin());
             _list.Add(new StringPointerStructMemberTransformPlugin());
             _list.Add(new BoolStructMemberTransformPlugin());
+			_list.Add(new FunctionPointerMemberTransformPlugin());
 
             // Union Members
             _list.Add(new BoolUnionMemberTransformPlugin());

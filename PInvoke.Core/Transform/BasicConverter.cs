@@ -265,14 +265,14 @@ namespace PInvoke.Transform
 
         }
 
-        /// <summary>
-        /// Core conversion routine.  All code should just go through this 
-        /// </summary>
-        /// <param name="bag"></param>
-        /// <param name="ep"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        private CodeTypeDeclarationCollection ConvertBagToCodeDom(NativeSymbolBag bag, ErrorProvider ep)
+		/// <summary>
+		/// Core conversion routine.  All code should just go through this 
+		/// </summary>
+		/// <param name="bag"></param>
+		/// <param name="ep"></param>
+		/// <returns></returns>
+		/// <remarks></remarks>
+		private CodeTypeDeclarationCollection ConvertBagToCodeDom(NativeSymbolBag bag, ErrorProvider ep)
         {
             ThrowIfNull(bag);
             ThrowIfNull(ep);
@@ -289,8 +289,8 @@ namespace PInvoke.Transform
             MarshalTransform marshalUtil = new MarshalTransform(LanguageType, bag, TransformKindFlags);
             CodeTypeDeclarationCollection col = new CodeTypeDeclarationCollection();
 
-            // Only output the constants if there are actually any
-            List<NativeConstant> list = new List<NativeConstant>(bag.FindResolvedConstants());
+			// Only output the constants if there are actually any
+			List<NativeConstant> list = new List<NativeConstant>(bag.FindResolvedConstants());
             if (list.Count > 0)
             {
                 CodeTypeDeclaration constCtd = transform.GenerateConstants(list);
@@ -322,7 +322,81 @@ namespace PInvoke.Transform
             CodeDomPrettyList prettyLister = new CodeDomPrettyList(bag);
             prettyLister.PerformRename(col);
 
-            return col;
+			{ // Generate Helper Marshaler for Return String
+				CodeTypeDeclaration marl = new CodeTypeDeclaration("LPStrReturnMarshaler");
+				marl.IsClass = true;
+				// Implement interface
+				marl.BaseTypes.Add(new CodeTypeReference(typeof(System.Runtime.InteropServices.ICustomMarshaler)));
+
+				Func<CodeStatement> throwNotImplemented = () =>
+					new CodeThrowExceptionStatement(new CodeObjectCreateExpression(
+						typeof(NotImplementedException), new CodeExpression[0]
+					));
+
+				// Method CleanUpManagedData
+				var CleanUpManagedData = new CodeMemberMethod();
+				CleanUpManagedData.ReturnType = new CodeTypeReference(typeof(void));
+				CleanUpManagedData.Name = nameof(CleanUpManagedData);
+				CleanUpManagedData.Attributes = MemberAttributes.Public;
+				CleanUpManagedData.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object), "ManagedObj"));
+				CleanUpManagedData.Statements.Add(throwNotImplemented());
+
+				// Method CleanUpNativeData
+				var CleanUpNativeData = new CodeMemberMethod();
+				CleanUpNativeData.ReturnType = new CodeTypeReference(typeof(void));
+				CleanUpNativeData.Name = nameof(CleanUpNativeData);
+				CleanUpNativeData.Attributes = MemberAttributes.Public;
+				CleanUpNativeData.Parameters.Add(new CodeParameterDeclarationExpression(typeof(IntPtr), "pNativeData"));
+				CleanUpNativeData.Statements.Add(throwNotImplemented());
+
+				// Method GetNativeDataSize
+				var GetNativeDataSize = new CodeMemberMethod();
+				GetNativeDataSize.ReturnType = new CodeTypeReference(typeof(int));
+				GetNativeDataSize.Name = nameof(GetNativeDataSize);
+				GetNativeDataSize.Attributes = MemberAttributes.Public;
+				GetNativeDataSize.Statements.Add(throwNotImplemented());
+
+				// Method MarshalManagedToNative
+				var MarshalManagedToNative = new CodeMemberMethod();
+				MarshalManagedToNative.ReturnType = new CodeTypeReference(typeof(IntPtr));
+				MarshalManagedToNative.Name = nameof(MarshalManagedToNative);
+				MarshalManagedToNative.Attributes = MemberAttributes.Public;
+				MarshalManagedToNative.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object), "ManagedObj"));
+				MarshalManagedToNative.Statements.Add(throwNotImplemented());
+
+				// Method MarshalNativeToManaged
+				var MarshalNativeToManaged = new CodeMemberMethod();
+				MarshalNativeToManaged.ReturnType = new CodeTypeReference(typeof(object));
+				MarshalNativeToManaged.Name = nameof(MarshalNativeToManaged);
+				MarshalNativeToManaged.Attributes = MemberAttributes.Public;
+				MarshalNativeToManaged.Parameters.Add(new CodeParameterDeclarationExpression(typeof(IntPtr), "pNativeData"));
+				MarshalNativeToManaged.Statements.Add(new CodeMethodReturnStatement(new CodeMethodInvokeExpression(
+					new CodeMethodReferenceExpression(
+						new CodeTypeReferenceExpression(typeof(System.Runtime.InteropServices.Marshal)), "PtrToStringUTF8"
+					), new CodeVariableReferenceExpression("pNativeData")
+				)));
+
+				// Method GetInstance
+				var GetInstance = new CodeMemberMethod();
+				GetInstance.ReturnType = new CodeTypeReference(typeof(System.Runtime.InteropServices.ICustomMarshaler));
+				GetInstance.Name = nameof(GetInstance);
+				GetInstance.Attributes = MemberAttributes.Public | MemberAttributes.Static;
+				GetInstance.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string), "param"));
+				GetInstance.Statements.Add(new CodeMethodReturnStatement(new CodeObjectCreateExpression(
+					"LPStrReturnMarshaler", new CodeExpression[0]
+				)));
+
+				marl.Members.Add(CleanUpManagedData);
+				marl.Members.Add(CleanUpNativeData);
+				marl.Members.Add(GetNativeDataSize);
+				marl.Members.Add(MarshalManagedToNative);
+				marl.Members.Add(MarshalNativeToManaged);
+				marl.Members.Add(GetInstance);
+
+				col.Add(marl);
+			}
+
+			return col;
         }
 
         /// <summary>

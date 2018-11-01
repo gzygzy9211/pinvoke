@@ -838,7 +838,6 @@ namespace PInvoke.Transform
 			if (pt.RealType is NativeNamedType && (pt.RealType as NativeNamedType).IsConst)
 			{
 				codeMethod.ReturnType = new CodeTypeReference(typeof(string));
-				codeMethod.ReturnTypeCustomAttributes.Add(MarshalAttributeFactory.CreateOutAttribute());
 				codeMethod.ReturnTypeCustomAttributes.Add(CreateStringMarshalAttribute(charSet));
 			}
 		}

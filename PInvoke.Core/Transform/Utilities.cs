@@ -188,6 +188,10 @@ namespace PInvoke.Transform
             {
                 attr.Arguments.Add(new CodeAttributeArgument("CallingConvention", new CodeFieldReferenceExpression(new CodeTypeReferenceExpression(typeof(CallingConvention)), kind.ToString())));
             }
+            else
+            {
+                attr.Arguments.Add(new CodeAttributeArgument("CallingConvention", new CodeFieldReferenceExpression(new CodeTypeReferenceExpression(typeof(CallingConvention)), CallingConvention.Cdecl.ToString())));
+            }
 
             return attr;
         }
